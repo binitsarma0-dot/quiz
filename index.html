@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Quiz Generator</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #3b82f6;
+      --accent: #2563eb;
+      --accent-light: #60a5fa;
+      --bg: #ffffff;
+      --bg-card: #ffffff;
+      --bg-input: #f8fafc;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --success: #16a34a;
+      --error: #dc2626;
+      --warning: #d97706;
+      --border: #e2e8f0;
+      --shadow: 0 4px 24px rgba(37, 99, 235, 0.08);
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(37, 99, 235, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(37, 99, 235, 0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+      animation: fadeInDown 0.6s ease;
+    }
+
+    header h1 {
+      font-size: clamp(1.75rem, 5vw, 2.5rem);
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      animation: fadeInUp 0.5s ease;
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="password"],
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    textarea {
+      min-height: 160px;
+      resize: vertical;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .option-group label {
+      margin-bottom: 8px;
+    }
+
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      flex: 1;
+      min-width: 70px;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 2px solid transparent;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .pill:hover {
+      border-color: var(--primary-light);
+      color: var(--text);
+    }
+
+    .pill.active {
+      background: rgba(37, 99, 235, 0.1);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      font-family: inherit;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+      margin-top: 8px;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-dark);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+    }
+
+    .btn-secondary {
+      background: var(--bg-input);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--primary-light);
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    }
+
+    .api-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .api-row input {
+      flex: 1;
+    }
+
+    .toggle-key {
+      padding: 12px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .toggle-key:hover {
+      color: var(--text);
+    }
+
+    .high-score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 999px;
+      color: var(--warning);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Loading */
+    .loading-overlay {
+      text-align: center;
+      padding: 48px 24px;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    .loading-text {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    /* Quiz */
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .question-counter {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .timer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--primary);
+    }
+
+    .timer.warning {
+      color: var(--warning);
+      animation: pulse 0.5s ease infinite;
+    }
+
+    .timer.danger {
+      color: var(--error);
+      animation: pulse 0.3s ease infinite;
+    }
+
+    .timer-ring {
+      width: 44px;
+      height: 44px;
+      position: relative;
+    }
+
+    .timer-ring svg {
+      transform: rotate(-90deg);
+      width: 44px;
+      height: 44px;
+    }
+
+    .timer-ring circle {
+      fill: none;
+      stroke-width: 3;
+    }
+
+    .timer-ring .bg {
+      stroke: var(--bg-input);
+    }
+
+    .timer-ring .progress {
+      stroke: var(--primary);
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear, stroke 0.3s;
+    }
+
+    .timer-ring.warning .progress {
+      stroke: var(--warning);
+    }
+
+    .timer-ring.danger .progress {
+      stroke: var(--error);
+    }
+
+    .progress-bar-wrap {
+      height: 6px;
+      background: var(--bg-input);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .question-text {
+      font-size: clamp(1.1rem, 3vw, 1.35rem);
+      font-weight: 600;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .answer-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 16px 18px;
+      background: var(--bg-input);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      animation: fadeInUp 0.35s ease backwards;
+    }
+
+    .answer-btn:nth-child(1) { animation-delay: 0.05s; }
+    .answer-btn:nth-child(2) { animation-delay: 0.1s; }
+    .answer-btn:nth-child(3) { animation-delay: 0.15s; }
+    .answer-btn:nth-child(4) { animation-delay: 0.2s; }
+
+    .answer-btn:hover:not(:disabled) {
+      border-color: var(--primary-light);
+      background: rgba(37, 99, 235, 0.06);
+    }
+
+    .answer-btn:disabled {
+      cursor: default;
+    }
+
+    .answer-btn.selected {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.08);
+    }
+
+    .answer-btn.correct {
+      border-color: var(--success);
+      background: rgba(34, 197, 94, 0.15);
+    }
+
+    .answer-btn.incorrect {
+      border-color: var(--error);
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .answer-letter {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(37, 99, 235, 0.1);
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--primary);
+    }
+
+    .answer-btn.correct .answer-letter {
+      background: rgba(34, 197, 94, 0.25);
+      color: var(--success);
+    }
+
+    .answer-btn.incorrect .answer-letter {
+      background: rgba(239, 68, 68, 0.25);
+      color: var(--error);
+    }
+
+    .feedback-banner {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    .feedback-banner.correct-fb {
+      background: rgba(22, 163, 74, 0.08);
+      border: 1px solid rgba(22, 163, 74, 0.25);
+      color: #166534;
+    }
+
+    .feedback-banner.incorrect-fb {
+      background: rgba(220, 38, 38, 0.08);
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      color: #b91c1c;
+    }
+
+    .feedback-banner strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .next-btn-wrap {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    /* Results */
+    .results-hero {
+      text-align: center;
+      padding: 16px 0 24px;
+    }
+
+    .score-circle {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, 0.08);
+      border: 4px solid var(--primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      animation: scaleIn 0.5s ease;
+    }
+
+    .score-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .score-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .results-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-box {
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      padding: 16px 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .review-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .review-item {
+      background: var(--bg-input);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      border-left: 4px solid var(--border);
+    }
+
+    .review-item.was-correct {
+      border-left-color: var(--success);
+    }
+
+    .review-item.was-wrong {
+      border-left-color: var(--error);
+    }
+
+    .review-q {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .review-detail {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .review-detail span {
+      color: var(--text);
+    }
+
+    .new-high-score {
+      animation: scaleIn 0.5s ease;
+      color: var(--warning);
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    /* Error */
+    .error-box {
+      background: rgba(220, 38, 38, 0.06);
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      color: #b91c1c;
+      margin-top: 16px;
+      font-size: 0.95rem;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    .error-box strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--error);
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.85); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .slide-out {
+      animation: slideOut 0.25s ease forwards;
+    }
+
+    .slide-in {
+      animation: slideIn 0.35s ease;
+    }
+
+    @keyframes slideOut {
+      to { opacity: 0; transform: translateX(-20px); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 16px 12px 40px; }
+      .card { padding: 18px; }
+      .results-summary { grid-template-columns: 1fr; }
+      .pill { min-width: 60px; padding: 8px 10px; font-size: 0.85rem; }
+    }
+
+    /* Source tabs & PDF upload */
+    .source-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .source-tab {
+      flex: 1;
+      padding: 10px 16px;
+      background: var(--bg-input);
+      border: 2px solid transparent;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .source-tab:hover {
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .source-tab.active {
+      background: rgba(37, 99, 235, 0.1);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .source-panel.hidden {
+      display: none;
+    }
+
+    .pdf-dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg-input);
+    }
+
+    .pdf-dropzone:hover,
+    .pdf-dropzone.dragover {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.04);
+    }
+
+    .pdf-dropzone-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    .pdf-dropzone-title {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .pdf-dropzone-hint {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .pdf-file-input {
+      display: none;
+    }
+
+    .pdf-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: rgba(37, 99, 235, 0.06);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      flex-wrap: wrap;
+    }
+
+    .pdf-info-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pdf-info-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pdf-info-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .pdf-remove-btn {
+      padding: 8px 14px;
+      background: transparent;
+      border: 1px solid rgba(220, 38, 38, 0.35);
+      border-radius: 8px;
+      color: var(--error);
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
+    .pdf-remove-btn:hover {
+      background: rgba(220, 38, 38, 0.06);
+    }
+
+    .page-range-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .page-range-row input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    .page-range-row input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .pdf-extract-status {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pdf-extract-status.success {
+      color: var(--success);
+    }
+
+    .pdf-extract-status.error {
+      color: var(--error);
+    }
+
+    .mini-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .or-divider::before,
+    .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* AI Study Bot */
+    .bot-quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .bot-quick-btn {
+      padding: 8px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .bot-quick-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(37, 99, 235, 0.06);
+    }
+
+    .bot-quick-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .bot-messages {
+      max-height: 320px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+    }
+
+    .bot-msg {
+      max-width: 92%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      animation: fadeInUp 0.3s ease;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .bot-msg-assistant {
+      align-self: flex-start;
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.15);
+      border-bottom-left-radius: 4px;
+    }
+
+    .bot-msg-user {
+      align-self: flex-end;
+      background: rgba(37, 99, 235, 0.12);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-bottom-right-radius: 4px;
+    }
+
+    .bot-msg-loading {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      padding: 8px 0;
+    }
+
+    .bot-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .bot-input-row input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    .bot-input-row input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .bot-avatar {
+      font-size: 1.1rem;
+      margin-right: 4px;
+    }
+
+    .pdf-btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pdf-btn-row .btn {
+      flex: 1;
+      min-width: 140px;
+      margin-top: 0;
+    }
+
+    /* Welcome popup */
+    .welcome-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    .welcome-overlay.hidden {
+      display: none;
+    }
+
+    .welcome-popup {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 32px 28px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(37, 99, 235, 0.15);
+      animation: scaleIn 0.4s ease;
+    }
+
+    .welcome-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: var(--bg-input);
+      border-radius: 50%;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      font-family: inherit;
+      line-height: 1;
+    }
+
+    .welcome-close:hover {
+      background: rgba(220, 38, 38, 0.08);
+      color: var(--error);
+    }
+
+    .welcome-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+
+    .welcome-creator {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+
+    .welcome-message {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+
+    .welcome-day {
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 12px;
+    }
+
+    .welcome-btn {
+      margin-top: 24px;
+      width: 100%;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+  <!-- Welcome Popup -->
+  <div class="welcome-overlay hidden" id="welcomeOverlay">
+    <div class="welcome-popup">
+      <button type="button" class="welcome-close" id="welcomeClose" aria-label="Close">✕</button>
+      <div class="welcome-icon">📚</div>
+      <div class="welcome-creator">Created by BINIT SARMA</div>
+      <p class="welcome-message">Upload your notes and start taking quizzes</p>
+      <p class="welcome-day">Have a good day</p>
+      <button type="button" class="btn btn-primary welcome-btn" id="welcomeStartBtn">Let's Go! 🚀</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <h1>AI Quiz Generator</h1>
+      <p>Turn your study notes into an interactive quiz powered by Gemini</p>
+      <div class="high-score-badge" id="highScoreBadge">🏆 High Score: —</div>
+    </header>
+
+    <!-- Setup Screen -->
+    <section id="setupScreen">
+      <div class="card">
+        <div class="card-title">Study Material</div>
+
+        <div class="source-tabs">
+          <button type="button" class="source-tab active" data-source="text">📝 Paste Text</button>
+          <button type="button" class="source-tab" data-source="pdf">📄 Upload PDF</button>
+          <button type="button" class="source-tab" data-source="topic">🎯 Topic Name</button>
+        </div>
+
+        <div id="textPanel" class="source-panel">
+          <label for="studyNotes">Paste your notes or text to quiz on</label>
+          <textarea id="studyNotes" placeholder="Paste your study notes, textbook excerpts, lecture notes, or any text you want to be quizzed on..."></textarea>
+        </div>
+
+        <div id="pdfPanel" class="source-panel hidden">
+          <label>Upload a chapter PDF</label>
+          <div class="pdf-dropzone" id="pdfDropzone">
+            <div class="pdf-dropzone-icon">📄</div>
+            <div class="pdf-dropzone-title">Drop your PDF here or click to browse</div>
+            <div class="pdf-dropzone-hint">Supports .pdf files · Processed locally in your browser</div>
+            <input type="file" id="pdfInput" class="pdf-file-input" accept=".pdf,application/pdf">
+          </div>
+
+          <div id="pdfInfo" class="pdf-info hidden">
+            <div class="pdf-info-details">
+              <div class="pdf-info-name" id="pdfFileName">chapter.pdf</div>
+              <div class="pdf-info-meta" id="pdfFileMeta">0 pages</div>
+            </div>
+            <button type="button" class="pdf-remove-btn" id="pdfRemoveBtn">Remove</button>
+          </div>
+
+          <div class="page-range-row" id="pageRangeRow">
+            <div>
+              <label for="pageFrom">From page</label>
+              <input type="number" id="pageFrom" min="1" value="1" placeholder="1">
+            </div>
+            <div>
+              <label for="pageTo">To page</label>
+              <input type="number" id="pageTo" min="1" value="1" placeholder="All">
+            </div>
+          </div>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px;">
+            Leave page range as-is to use the entire PDF, or set a range for a specific chapter.
+          </p>
+
+          <div class="pdf-btn-row">
+            <button type="button" class="btn btn-secondary" id="extractPdfBtn" disabled>
+              📖 Extract Text
+            </button>
+            <button type="button" class="btn btn-primary" id="aiExtractPdfBtn" style="width:auto;margin:0;flex:1;" disabled>
+              🤖 Read with AI
+            </button>
+          </div>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px;">
+            Scanned/image PDFs? Use <strong>Read with AI</strong> — Gemini reads the PDF directly.
+          </p>
+          <div id="pdfExtractStatus" class="pdf-extract-status hidden"></div>
+
+          <div class="or-divider">preview extracted text</div>
+          <textarea id="pdfPreview" placeholder="Extracted PDF text will appear here. You can edit it before generating the quiz..." readonly style="min-height:120px;opacity:0.7;"></textarea>
+        </div>
+
+        <div id="topicPanel" class="source-panel hidden">
+          <label for="topicName">Enter a topic to study or quiz on</label>
+          <input type="text" id="topicName" placeholder="e.g. Photosynthesis, World War 2, Python Loops, Human Heart...">
+          <p style="font-size:0.8rem;color:var(--text-muted);margin:8px 0 12px;">
+            Just type a topic — AI will generate complete study notes and quiz questions. No PDF or notes needed.
+          </p>
+          <button type="button" class="btn btn-secondary" id="generateTopicNotesBtn" style="width:100%;margin-top:0;">
+            📚 Generate Study Notes
+          </button>
+          <div id="topicStatus" class="pdf-extract-status hidden"></div>
+          <div class="or-divider">study notes preview</div>
+          <textarea id="topicPreview" placeholder="AI-generated study notes will appear here. You can edit them before generating a quiz..." readonly style="min-height:160px;opacity:0.7;"></textarea>
+        </div>
+      </div>
+
+      <div class="card" id="aiBotCard">
+        <div class="card-title">🤖 AI Study Assistant</div>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">
+          Summarize material, explain topics, or ask questions. Works with pasted text, PDFs, or topic names.
+        </p>
+
+        <div class="bot-quick-actions">
+          <button type="button" class="bot-quick-btn" data-prompt="summarize">📝 Summarize Topic</button>
+          <button type="button" class="bot-quick-btn" data-prompt="keypoints">🔑 Key Points</button>
+          <button type="button" class="bot-quick-btn" data-prompt="simple">💡 Explain Simply</button>
+        </div>
+
+        <div class="bot-messages" id="botMessages">
+          <div class="bot-msg bot-msg-assistant">
+            <span class="bot-avatar">🤖</span>Hi! Paste notes, upload a PDF, or enter a <strong>Topic Name</strong>. I can summarize, explain, or help you study before the quiz.
+          </div>
+        </div>
+
+        <div class="bot-input-row">
+          <input type="text" id="botInput" placeholder="Ask anything about your study material...">
+          <button type="button" class="btn btn-primary" id="botSendBtn" style="width:auto;margin:0;padding:12px 18px;">Send</button>
+        </div>
+
+        <button type="button" class="btn btn-secondary hidden" id="useSummaryBtn" style="width:100%;margin-top:12px;">
+          ✅ Use This Summary for Quiz
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Quiz Settings</div>
+        <div class="options-grid">
+          <div class="option-group">
+            <label>Questions</label>
+            <div class="pill-group" id="countPills">
+              <button type="button" class="pill active" data-value="5">5</button>
+              <button type="button" class="pill" data-value="10">10</button>
+              <button type="button" class="pill" data-value="15">15</button>
+              <button type="button" class="pill" data-value="20">20</button>
+              <button type="button" class="pill" data-value="25">25</button>
+              <button type="button" class="pill" data-value="30">30</button>
+            </div>
+          </div>
+          <div class="option-group">
+            <label>Difficulty</label>
+            <div class="pill-group" id="difficultyPills">
+              <button type="button" class="pill active" data-value="Easy">Easy</button>
+              <button type="button" class="pill" data-value="Medium">Medium</button>
+              <button type="button" class="pill" data-value="Hard">Hard</button>
+            </div>
+          </div>
+          <div class="option-group" style="grid-column: 1 / -1;">
+            <label>Question Type</label>
+            <div class="pill-group" id="typePills">
+              <button type="button" class="pill active" data-value="MCQ">MCQ</button>
+              <button type="button" class="pill" data-value="True/False">True/False</button>
+              <button type="button" class="pill" data-value="Mixed">Mixed</button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary" id="generateBtn">✨ Generate Quiz</button>
+        <div id="setupError" class="error-box hidden"></div>
+      </div>
+    </section>
+
+    <!-- Loading Screen -->
+    <section id="loadingScreen" class="hidden">
+      <div class="card loading-overlay">
+        <div class="spinner"></div>
+        <p class="loading-text" id="loadingText">Generating your quiz with Gemini AI...</p>
+        <p class="loading-text" style="margin-top:8px;font-size:0.85rem;">This may take a few seconds</p>
+      </div>
+    </section>
+
+    <!-- Quiz Screen -->
+    <section id="quizScreen" class="hidden">
+      <div class="card" id="quizCard">
+        <div class="quiz-header">
+          <span class="question-counter" id="questionCounter">Question 1 of 5</span>
+          <div class="timer" id="timerDisplay">
+            <div class="timer-ring" id="timerRing">
+              <svg viewBox="0 0 44 44">
+                <circle class="bg" cx="22" cy="22" r="18"></circle>
+                <circle class="progress" id="timerCircle" cx="22" cy="22" r="18"
+                  stroke-dasharray="113.1" stroke-dashoffset="0"></circle>
+              </svg>
+            </div>
+            <span id="timerText">30</span>s
+          </div>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+        </div>
+        <div id="questionArea">
+          <p class="question-text" id="questionText"></p>
+          <div class="answers" id="answersContainer"></div>
+          <div id="feedbackArea"></div>
+          <div class="next-btn-wrap hidden" id="nextBtnWrap">
+            <button type="button" class="btn btn-primary" id="nextBtn" style="width:auto;padding:12px 32px;">Next Question →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Screen -->
+    <section id="resultsScreen" class="hidden">
+      <div class="card">
+        <div class="results-hero">
+          <p class="new-high-score hidden" id="newHighScoreMsg">🎉 New High Score!</p>
+          <div class="score-circle">
+            <span class="score-value" id="finalScore">0%</span>
+            <span class="score-label">Score</span>
+          </div>
+        </div>
+        <div class="results-summary">
+          <div class="stat-box">
+            <div class="stat-value" id="statCorrect">0</div>
+            <div class="stat-label">Correct</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="statWrong">0</div>
+            <div class="stat-label">Wrong</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">Total</div>
+          </div>
+        </div>
+        <div class="card-title">Answer Review</div>
+        <div class="review-list" id="reviewList"></div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" id="retakeBtn">🔄 Retake Quiz</button>
+          <button type="button" class="btn btn-primary" id="newQuizBtn" style="width:auto;">✨ New Quiz</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const TIMER_SECONDS = 30;
+    const CIRCUMFERENCE = 2 * Math.PI * 18;
+    const LETTERS = ['A', 'B', 'C', 'D'];
+    const HIGH_SCORE_KEY = 'quizGenHighScore';
+    const WELCOME_SEEN_KEY = 'quizWelcomeSeen';
+    const MAX_NOTES_LENGTH = 80000;
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const state = {
+      questions: [],
+      currentIndex: 0,
+      answers: [],
+      timer: null,
+      timeLeft: TIMER_SECONDS,
+      answered: false,
+      settings: { count: 5, difficulty: 'Easy', type: 'MCQ' },
+      pdfFile: null,
+      pdfPageCount: 0,
+      pdfExtractedText: '',
+      activeSource: 'text',
+      lastSummary: '',
+      topicContent: '',
+      topicCachedName: ''
+    };
+
+    const BOT_PROMPTS = {
+      summarize: 'Create a clear, structured summary of this study material. Cover all main topics, concepts, and definitions. Use headings and bullet points. Make it easy to study from.',
+      keypoints: 'List the most important key points, facts, formulas, and definitions from this material that a student must know for an exam. Use numbered bullet points.',
+      simple: 'Explain the main topic in simple, easy-to-understand language for a beginner. Break it down step by step with short paragraphs.'
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function init() {
+      loadHighScore();
+      setupWelcomePopup();
+      setupPillGroups();
+      setupSourceTabs();
+      setupPdfUpload();
+      bindEvents();
+    }
+
+    function loadHighScore() {
+      const score = localStorage.getItem(HIGH_SCORE_KEY);
+      $('highScoreBadge').textContent = score
+        ? `🏆 High Score: ${score}%`
+        : '🏆 High Score: —';
+    }
+
+    function setupWelcomePopup() {
+      const overlay = $('welcomeOverlay');
+      if (localStorage.getItem(WELCOME_SEEN_KEY)) {
+        overlay.classList.add('hidden');
+        return;
+      }
+
+      overlay.classList.remove('hidden');
+
+      const close = () => {
+        localStorage.setItem(WELCOME_SEEN_KEY, '1');
+        overlay.classList.add('hidden');
+      };
+
+      $('welcomeClose').addEventListener('click', close);
+      $('welcomeStartBtn').addEventListener('click', close);
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) close();
+      });
+    }
+
+    function setupPillGroups() {
+      document.querySelectorAll('.pill-group').forEach(group => {
+        group.addEventListener('click', (e) => {
+          const pill = e.target.closest('.pill');
+          if (!pill) return;
+          group.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+        });
+      });
+    }
+
+    function getPillValue(groupId) {
+      const active = $(groupId).querySelector('.pill.active');
+      return active ? active.dataset.value : null;
+    }
+
+    function bindEvents() {
+      $('generateBtn').addEventListener('click', generateQuiz);
+      $('nextBtn').addEventListener('click', nextQuestion);
+      $('retakeBtn').addEventListener('click', retakeQuiz);
+      $('newQuizBtn').addEventListener('click', showSetup);
+      $('extractPdfBtn').addEventListener('click', extractPdfText);
+      $('aiExtractPdfBtn').addEventListener('click', () => extractPdfWithAI(false));
+      $('pdfRemoveBtn').addEventListener('click', clearPdf);
+      $('pageFrom').addEventListener('change', validatePageRange);
+      $('pageTo').addEventListener('change', validatePageRange);
+      $('botSendBtn').addEventListener('click', () => sendBotMessage($('botInput').value.trim()));
+      $('botInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendBotMessage($('botInput').value.trim());
+      });
+      $('useSummaryBtn').addEventListener('click', useSummaryForQuiz);
+      $('generateTopicNotesBtn').addEventListener('click', () => generateTopicNotes(false));
+      document.querySelectorAll('.bot-quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const type = btn.dataset.prompt;
+          sendBotMessage(BOT_PROMPTS[type], type);
+        });
+      });
+    }
+
+    function setupSourceTabs() {
+      document.querySelectorAll('.source-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          state.activeSource = tab.dataset.source;
+          $('textPanel').classList.toggle('hidden', state.activeSource !== 'text');
+          $('pdfPanel').classList.toggle('hidden', state.activeSource !== 'pdf');
+          $('topicPanel').classList.toggle('hidden', state.activeSource !== 'topic');
+        });
+      });
+    }
+
+    function setupPdfUpload() {
+      const dropzone = $('pdfDropzone');
+      const input = $('pdfInput');
+
+      dropzone.addEventListener('click', () => input.click());
+
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) handlePdfFile(file);
+      });
+
+      input.addEventListener('change', () => {
+        if (input.files[0]) handlePdfFile(input.files[0]);
+      });
+    }
+
+    function handlePdfFile(file) {
+      if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+        showPdfStatus('Please upload a valid PDF file.', 'error');
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        showPdfStatus('PDF must be under 25 MB.', 'error');
+        return;
+      }
+
+      state.pdfFile = file;
+      state.pdfExtractedText = '';
+      $('pdfPreview').value = '';
+      $('extractPdfBtn').disabled = false;
+      $('aiExtractPdfBtn').disabled = false;
+      showPdfStatus('', '');
+
+      loadPdfMeta(file);
+    }
+
+    async function loadPdfMeta(file) {
+      try {
+        const buffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+        state.pdfPageCount = pdf.numPages;
+
+        $('pdfFileName').textContent = file.name;
+        $('pdfFileMeta').textContent = `${pdf.numPages} page${pdf.numPages !== 1 ? 's' : ''} · ${formatFileSize(file.size)}`;
+        $('pdfInfo').classList.remove('hidden');
+        $('pageFrom').min = 1;
+        $('pageFrom').max = pdf.numPages;
+        $('pageFrom').value = 1;
+        $('pageTo').min = 1;
+        $('pageTo').max = pdf.numPages;
+        $('pageTo').value = pdf.numPages;
+        $('pageRangeRow').classList.remove('hidden');
+      } catch (err) {
+        showPdfStatus('Could not read PDF. The file may be corrupted or password-protected.', 'error');
+        clearPdf();
+      }
+    }
+
+    function validatePageRange() {
+      if (!state.pdfPageCount) return;
+      let from = parseInt($('pageFrom').value, 10) || 1;
+      let to = parseInt($('pageTo').value, 10) || state.pdfPageCount;
+      from = Math.max(1, Math.min(from, state.pdfPageCount));
+      to = Math.max(from, Math.min(to, state.pdfPageCount));
+      $('pageFrom').value = from;
+      $('pageTo').value = to;
+    }
+
+    async function extractPdfText() {
+      if (!state.pdfFile) return;
+
+      validatePageRange();
+      const from = parseInt($('pageFrom').value, 10);
+      const to = parseInt($('pageTo').value, 10);
+
+      $('extractPdfBtn').disabled = true;
+      $('aiExtractPdfBtn').disabled = true;
+      showPdfStatus('Extracting text from PDF...', 'loading');
+
+      try {
+        const buffer = await state.pdfFile.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+        const parts = [];
+
+        for (let i = from; i <= to; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items.map(item => item.str).join(' ');
+          parts.push(pageText);
+        }
+
+        let text = parts.join('\n\n').replace(/\s+/g, ' ').trim();
+
+        if (!text || text.length < 20) {
+          showPdfStatus('Scanned PDF detected — reading with AI...', 'loading');
+          await extractPdfWithAI(true);
+          return;
+        }
+
+        applyExtractedText(text, from, to, 'local');
+      } catch (err) {
+        showPdfStatus(err.message || 'Failed to extract text from PDF.', 'error');
+      } finally {
+        $('extractPdfBtn').disabled = !state.pdfFile;
+        $('aiExtractPdfBtn').disabled = !state.pdfFile;
+      }
+    }
+
+    async function extractPdfWithAI(skipStatus) {
+      if (!state.pdfFile) return;
+
+      validatePageRange();
+      const from = parseInt($('pageFrom').value, 10);
+      const to = parseInt($('pageTo').value, 10);
+
+      if (!skipStatus) {
+        $('extractPdfBtn').disabled = true;
+        $('aiExtractPdfBtn').disabled = true;
+        showPdfStatus('Reading PDF with AI (may take 30–60 seconds)...', 'loading');
+      }
+
+      try {
+        const base64 = await fileToBase64(state.pdfFile);
+        const parts = [
+          { inlineData: { mimeType: 'application/pdf', data: base64 } },
+          {
+            text: `Extract ALL text from pages ${from} to ${to} of this PDF document.
+
+Rules:
+- Return the full extracted text only — do NOT summarize
+- Include every question, option, heading, and paragraph you can read
+- If it is a question paper, extract all questions and answer choices
+- Preserve line breaks between questions where possible
+- If some pages are images, read the text from the images using OCR`
+          }
+        ];
+
+        let text = await callGemini(parts, { temperature: 0.2, maxOutputTokens: 8192 });
+        text = text.trim();
+
+        if (!text || text.length < 20) {
+          throw new Error('AI could not read text from this PDF. Try a smaller page range.');
+        }
+
+        applyExtractedText(text, from, to, 'ai');
+      } catch (err) {
+        showPdfStatus(err.message || 'AI failed to read the PDF. Try fewer pages.', 'error');
+      } finally {
+        $('extractPdfBtn').disabled = !state.pdfFile;
+        $('aiExtractPdfBtn').disabled = !state.pdfFile;
+      }
+    }
+
+    function applyExtractedText(text, from, to, source) {
+      if (text.length > MAX_NOTES_LENGTH) {
+        text = text.slice(0, MAX_NOTES_LENGTH);
+        showPdfStatus(
+          `${source === 'ai' ? 'AI read' : 'Extracted'} ${formatNumber(text.length)} characters (trimmed). Ready to generate!`,
+          'success'
+        );
+      } else {
+        showPdfStatus(
+          `${source === 'ai' ? 'AI read' : 'Extracted'} ${formatNumber(text.length)} characters from pages ${from}–${to}. Ready!`,
+          'success'
+        );
+      }
+
+      state.pdfExtractedText = text;
+      $('pdfPreview').value = text;
+      $('pdfPreview').readOnly = false;
+      $('pdfPreview').style.opacity = '1';
+    }
+
+    function clearPdf() {
+      state.pdfFile = null;
+      state.pdfPageCount = 0;
+      state.pdfExtractedText = '';
+      $('pdfInput').value = '';
+      $('pdfInfo').classList.add('hidden');
+      $('pdfPreview').value = '';
+      $('pdfPreview').readOnly = true;
+      $('pdfPreview').style.opacity = '0.7';
+      $('extractPdfBtn').disabled = true;
+      $('aiExtractPdfBtn').disabled = true;
+      showPdfStatus('', '');
+    }
+
+    function showPdfStatus(msg, type) {
+      const el = $('pdfExtractStatus');
+      if (!msg) {
+        el.classList.add('hidden');
+        el.innerHTML = '';
+        return;
+      }
+      el.classList.remove('hidden', 'success', 'error');
+      if (type === 'success') el.classList.add('success');
+      if (type === 'error') el.classList.add('error');
+      el.innerHTML = type === 'loading'
+        ? `<span class="mini-spinner"></span>${msg}`
+        : msg;
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function formatNumber(n) {
+      return n.toLocaleString();
+    }
+
+    function getStudyMaterial() {
+      if (state.activeSource === 'topic') {
+        return $('topicPreview').value.trim() || state.topicContent.trim();
+      }
+      if (state.activeSource === 'pdf') {
+        const preview = $('pdfPreview').value.trim();
+        return preview || state.pdfExtractedText.trim();
+      }
+      return $('studyNotes').value.trim();
+    }
+
+    function getTopicName() {
+      return $('topicName').value.trim();
+    }
+
+    function buildTopicNotesPrompt(topic) {
+      return `You are an expert teacher. Create comprehensive, detailed study notes on the topic: "${topic}".
+
+Include:
+- Clear overview and definition
+- All key concepts and subtopics
+- Important facts, formulas, dates, or terminology
+- Real-world examples where helpful
+- Common exam points students must know
+
+Write in clear, student-friendly language using headings and bullet points. Be thorough so a student can learn the full topic and be tested on it.`;
+    }
+
+    function showTopicStatus(msg, type) {
+      const el = $('topicStatus');
+      if (!msg) {
+        el.classList.add('hidden');
+        el.innerHTML = '';
+        return;
+      }
+      el.classList.remove('hidden', 'success', 'error');
+      if (type === 'success') el.classList.add('success');
+      if (type === 'error') el.classList.add('error');
+      el.innerHTML = type === 'loading'
+        ? `<span class="mini-spinner"></span>${msg}`
+        : msg;
+    }
+
+    async function generateTopicNotes(silent) {
+      const topic = getTopicName();
+      if (!topic || topic.length < 2) {
+        if (!silent) showTopicStatus('Please enter a topic name (at least 2 characters).', 'error');
+        return null;
+      }
+
+      if (!silent) {
+        $('generateTopicNotesBtn').disabled = true;
+        showTopicStatus(`Generating study notes for "${topic}"...`, 'loading');
+      }
+
+      try {
+        const text = await callGemini(buildTopicNotesPrompt(topic), {
+          temperature: 0.6,
+          maxOutputTokens: 8192
+        });
+
+        let notes = text.trim();
+        if (notes.length > MAX_NOTES_LENGTH) notes = notes.slice(0, MAX_NOTES_LENGTH);
+
+        state.topicContent = notes;
+        state.topicCachedName = topic;
+        state.lastSummary = notes;
+        $('topicPreview').value = notes;
+        $('topicPreview').readOnly = false;
+        $('topicPreview').style.opacity = '1';
+        $('useSummaryBtn').classList.remove('hidden');
+
+        if (!silent) {
+          showTopicStatus(`Study notes ready for "${topic}" (${formatNumber(notes.length)} chars). Generate a quiz below!`, 'success');
+        }
+        return notes;
+      } catch (err) {
+        if (!silent) showTopicStatus(err.message || 'Failed to generate study notes.', 'error');
+        throw err;
+      } finally {
+        if (!silent) $('generateTopicNotesBtn').disabled = false;
+      }
+    }
+
+    async function fileToBase64(file) {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
+    }
+
+    function addBotMessage(text, role) {
+      const el = document.createElement('div');
+      el.className = `bot-msg bot-msg-${role}`;
+      if (role === 'assistant') {
+        el.innerHTML = `<span class="bot-avatar">🤖</span>${escapeHtml(text)}`;
+      } else {
+        el.textContent = text;
+      }
+      $('botMessages').appendChild(el);
+      $('botMessages').scrollTop = $('botMessages').scrollHeight;
+      return el;
+    }
+
+    function addBotLoading() {
+      const el = document.createElement('div');
+      el.className = 'bot-msg bot-msg-loading';
+      el.id = 'botLoading';
+      el.innerHTML = '<span class="mini-spinner"></span>Thinking...';
+      $('botMessages').appendChild(el);
+      $('botMessages').scrollTop = $('botMessages').scrollHeight;
+    }
+
+    function removeBotLoading() {
+      $('botLoading')?.remove();
+    }
+
+    function getBotLabel(type) {
+      if (type === 'summarize') return 'Summarize this topic';
+      if (type === 'keypoints') return 'List key points';
+      if (type === 'simple') return 'Explain simply';
+      return type;
+    }
+
+    async function buildBotParts(userPrompt) {
+      if (state.activeSource === 'topic') {
+        const topic = getTopicName();
+        const preview = getStudyMaterial();
+        if (preview && preview.length >= 20) {
+          return [{ text: `${userPrompt}\n\n---\nTOPIC: ${topic}\nSTUDY MATERIAL:\n${preview.slice(0, MAX_NOTES_LENGTH)}` }];
+        }
+        if (topic) {
+          return [{ text: `${userPrompt}\n\nThe topic is: "${topic}". Use your knowledge of this topic to answer.` }];
+        }
+        return null;
+      }
+
+      const text = state.activeSource === 'pdf'
+        ? ($('pdfPreview').value.trim() || state.pdfExtractedText.trim())
+        : $('studyNotes').value.trim();
+
+      if (text && text.length >= 20) {
+        return [{
+          text: `${userPrompt}\n\n---\nSTUDY MATERIAL:\n${text.slice(0, MAX_NOTES_LENGTH)}`
+        }];
+      }
+
+      if (state.pdfFile) {
+        validatePageRange();
+        const from = parseInt($('pageFrom').value, 10);
+        const to = parseInt($('pageTo').value, 10);
+        const base64 = await fileToBase64(state.pdfFile);
+        return [
+          { inlineData: { mimeType: 'application/pdf', data: base64 } },
+          { text: `${userPrompt}\n\nFocus on pages ${from} to ${to} of this PDF document.` }
+        ];
+      }
+
+      return null;
+    }
+
+    async function sendBotMessage(prompt, type) {
+      if (!prompt) return;
+
+      const parts = await buildBotParts(prompt);
+      if (!parts) {
+        addBotMessage('Please paste notes, upload a PDF, or enter a topic name first.', 'assistant');
+        return;
+      }
+
+      const displayLabel = type ? getBotLabel(type) : prompt;
+      addBotMessage(displayLabel, 'user');
+      $('botInput').value = '';
+      addBotLoading();
+
+      document.querySelectorAll('.bot-quick-btn, #botSendBtn').forEach(b => b.disabled = true);
+
+      try {
+        const reply = await callGemini(parts, { temperature: 0.5, maxOutputTokens: 4096 });
+        removeBotLoading();
+        addBotMessage(reply, 'assistant');
+        state.lastSummary = reply;
+        $('useSummaryBtn').classList.remove('hidden');
+      } catch (err) {
+        removeBotLoading();
+        addBotMessage(err.message || 'Failed to get a response. Please try again.', 'assistant');
+      } finally {
+        document.querySelectorAll('.bot-quick-btn, #botSendBtn').forEach(b => b.disabled = false);
+      }
+    }
+
+    function useSummaryForQuiz() {
+      if (!state.lastSummary) return;
+      document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('.source-tab[data-source="text"]').classList.add('active');
+      state.activeSource = 'text';
+      $('textPanel').classList.remove('hidden');
+      $('pdfPanel').classList.add('hidden');
+      $('studyNotes').value = state.lastSummary;
+      $('studyNotes').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      addBotMessage('Summary copied to study notes! Scroll down and click Generate Quiz when ready.', 'assistant');
+    }
+
+    function showSetup() {
+      hideAllScreens();
+      $('setupScreen').classList.remove('hidden');
+      $('setupError').classList.add('hidden');
+    }
+
+    function showLoading(message) {
+      hideAllScreens();
+      $('loadingScreen').classList.remove('hidden');
+      if (message) $('loadingText').textContent = message;
+      else $('loadingText').textContent = 'Generating your quiz with Gemini AI...';
+    }
+
+    function showQuiz() {
+      hideAllScreens();
+      $('quizScreen').classList.remove('hidden');
+    }
+
+    function showResults() {
+      hideAllScreens();
+      $('resultsScreen').classList.remove('hidden');
+    }
+
+    function hideAllScreens() {
+      ['setupScreen', 'loadingScreen', 'quizScreen', 'resultsScreen'].forEach(id => {
+        $(id).classList.add('hidden');
+      });
+    }
+
+    function showError(msg) {
+      const el = $('setupError');
+      el.innerHTML = `<strong>Something went wrong</strong>${msg}`;
+      el.classList.remove('hidden');
+    }
+
+    function buildPrompt(notes, count, difficulty, type) {
+      let typeInstruction = '';
+      if (type === 'MCQ') {
+        typeInstruction = 'All questions must be multiple choice with exactly 4 distinct, plausible options.';
+      } else if (type === 'True/False') {
+        typeInstruction = 'All questions must be True/False statements. Use exactly 4 options: ["True", "False", "Both True and False", "Neither True nor False"] where only True or False is correct (index 0 or 1).';
+      } else {
+        typeInstruction = 'Mix multiple choice (4 options) and True/False questions. For True/False use options ["True", "False", "Both True and False", "Neither True nor False"].';
+      }
+
+      return `You are a quiz generator. Create exactly ${count} quiz questions based ONLY on the study material below.
+
+Difficulty: ${difficulty}
+Question type: ${type}
+${typeInstruction}
+
+RULES:
+- Questions must test understanding of the provided material
+- Each question MUST have exactly 4 options in the "options" array
+- "correct" is the 0-based index (0-3) of the correct answer
+- Include a clear, educational "explanation" for each question
+- Return ONLY valid JSON, no markdown, no code fences, no extra text
+
+Required JSON format:
+{
+  "questions": [
+    {
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct": 0,
+      "explanation": "Why this answer is correct."
+    }
+  ]
+}
+
+STUDY MATERIAL:
+${notes}`;
+    }
+
+    function extractJSON(text) {
+      let cleaned = text.trim();
+      cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+      const start = cleaned.indexOf('{');
+      const end = cleaned.lastIndexOf('}');
+      if (start === -1 || end === -1) throw new Error('No JSON object found in response.');
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+
+    function validateQuizData(data) {
+      if (!data || !Array.isArray(data.questions) || data.questions.length === 0) {
+        throw new Error('Response missing questions array.');
+      }
+      data.questions.forEach((q, i) => {
+        if (!q.question || typeof q.question !== 'string') {
+          throw new Error(`Question ${i + 1} is missing text.`);
+        }
+        if (!Array.isArray(q.options) || q.options.length !== 4) {
+          throw new Error(`Question ${i + 1} must have exactly 4 options.`);
+        }
+        if (typeof q.correct !== 'number' || q.correct < 0 || q.correct > 3) {
+          throw new Error(`Question ${i + 1} has invalid correct index.`);
+        }
+        if (!q.explanation) q.explanation = 'No explanation provided.';
+      });
+      return data.questions;
+    }
+
+    async function callGemini(partsOrPrompt, generationConfig = {}, retries = 2) {
+      const parts = Array.isArray(partsOrPrompt)
+        ? partsOrPrompt
+        : [{ text: partsOrPrompt }];
+
+      let lastError = null;
+
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const res = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parts, generationConfig })
+          });
+
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            const err = new Error(data.error || `Request failed (${res.status})`);
+            err.retryable = data.retryable || res.status === 503 || res.status === 429;
+            throw err;
+          }
+          if (!data.text) throw new Error('Empty response from server.');
+          return data.text;
+        } catch (err) {
+          lastError = err;
+          if (attempt < retries && err.retryable !== false) {
+            await new Promise(r => setTimeout(r, 2000 * (attempt + 1)));
+            continue;
+          }
+          throw err;
+        }
+      }
+      throw lastError || new Error('Request failed.');
+    }
+
+    async function generateQuiz() {
+      let notes = getStudyMaterial();
+      if (!notes && state.lastSummary) notes = state.lastSummary;
+      const count = parseInt(getPillValue('countPills'), 10);
+      const difficulty = getPillValue('difficultyPills');
+      const type = getPillValue('typePills');
+
+      $('setupError').classList.add('hidden');
+
+      if (state.activeSource === 'topic') {
+        const topic = getTopicName();
+        if (!topic || topic.length < 2) {
+          showError('Please enter a topic name (e.g. Photosynthesis, SQL Joins).');
+          return;
+        }
+        if (!notes || state.topicCachedName !== topic) {
+          showLoading(`Generating study notes for "${topic}"...`);
+          try {
+            notes = await generateTopicNotes(true);
+          } catch (err) {
+            showSetup();
+            showError((err.message || 'Failed to generate study notes.') + ' Click Generate Quiz again to retry.');
+            return;
+          }
+        }
+      }
+
+      if (state.activeSource === 'pdf' && state.pdfFile && !notes && !state.lastSummary) {
+        showError('Extract PDF text, use AI Summarize, or switch to Paste Text.');
+        return;
+      }
+
+      if (!notes || notes.length < 20) {
+        showError(state.activeSource === 'pdf'
+          ? 'Not enough text from the PDF. Try a different page range or paste notes manually.'
+          : state.activeSource === 'topic'
+            ? 'Could not generate study notes for this topic. Try again.'
+            : 'Please paste at least 20 characters of study notes, upload a PDF, or enter a topic.');
+        return;
+      }
+
+      state.settings = { count, difficulty, type };
+
+      showLoading('Creating your quiz questions...');
+
+      try {
+        const prompt = buildPrompt(notes, count, difficulty, type);
+        const raw = await callGemini(prompt, {
+          responseMimeType: 'application/json',
+          maxOutputTokens: count >= 20 ? 16384 : 8192
+        });
+        const parsed = extractJSON(raw);
+        state.questions = validateQuizData(parsed);
+        state.currentIndex = 0;
+        state.answers = new Array(state.questions.length).fill(null);
+        startQuiz();
+      } catch (err) {
+        showSetup();
+        showError((err.message || 'Failed to generate quiz.') + (err.retryable !== false ? ' Click Generate Quiz again to retry.' : ''));
+      }
+    }
+
+    function startQuiz() {
+      showQuiz();
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      clearTimer();
+      state.answered = false;
+      state.timeLeft = TIMER_SECONDS;
+
+      const q = state.questions[state.currentIndex];
+      const total = state.questions.length;
+      const idx = state.currentIndex;
+
+      $('questionCounter').textContent = `Question ${idx + 1} of ${total}`;
+      $('progressBar').style.width = `${((idx) / total) * 100}%`;
+      $('questionText').textContent = q.question;
+      $('feedbackArea').innerHTML = '';
+      $('nextBtnWrap').classList.add('hidden');
+
+      const container = $('answersContainer');
+      container.innerHTML = '';
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'answer-btn';
+        btn.dataset.index = i;
+        btn.innerHTML = `<span class="answer-letter">${LETTERS[i]}</span><span>${escapeHtml(opt)}</span>`;
+        btn.addEventListener('click', () => selectAnswer(i));
+        container.appendChild(btn);
+      });
+
+      $('questionArea').classList.remove('slide-out');
+      $('questionArea').classList.add('slide-in');
+      updateTimerDisplay();
+      startTimer();
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function startTimer() {
+      state.timer = setInterval(() => {
+        state.timeLeft--;
+        updateTimerDisplay();
+        if (state.timeLeft <= 0) {
+          clearTimer();
+          if (!state.answered) handleTimeout();
+        }
+      }, 1000);
+    }
+
+    function clearTimer() {
+      if (state.timer) {
+        clearInterval(state.timer);
+        state.timer = null;
+      }
+    }
+
+    function updateTimerDisplay() {
+      const t = state.timeLeft;
+      $('timerText').textContent = t;
+      const offset = CIRCUMFERENCE * (1 - t / TIMER_SECONDS);
+      $('timerCircle').style.strokeDashoffset = offset;
+
+      const ring = $('timerRing');
+      const display = $('timerDisplay');
+      ring.classList.remove('warning', 'danger');
+      display.classList.remove('warning', 'danger');
+
+      if (t <= 5) {
+        ring.classList.add('danger');
+        display.classList.add('danger');
+      } else if (t <= 10) {
+        ring.classList.add('warning');
+        display.classList.add('warning');
+      }
+    }
+
+    function handleTimeout() {
+      state.answers[state.currentIndex] = { selected: -1, correct: false, timedOut: true };
+      revealAnswer(-1);
+    }
+
+    function selectAnswer(index) {
+      if (state.answered) return;
+      state.answered = true;
+      clearTimer();
+
+      const q = state.questions[state.currentIndex];
+      const isCorrect = index === q.correct;
+      state.answers[state.currentIndex] = { selected: index, correct: isCorrect, timedOut: false };
+
+      revealAnswer(index);
+    }
+
+    function revealAnswer(selectedIndex) {
+      const q = state.questions[state.currentIndex];
+      const buttons = $('answersContainer').querySelectorAll('.answer-btn');
+
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.correct) btn.classList.add('correct');
+        if (i === selectedIndex && i !== q.correct) btn.classList.add('incorrect');
+        if (i === selectedIndex) btn.classList.add('selected');
+      });
+
+      const timedOut = selectedIndex === -1;
+      const isCorrect = !timedOut && selectedIndex === q.correct;
+      const fb = document.createElement('div');
+      fb.className = `feedback-banner ${isCorrect ? 'correct-fb' : 'incorrect-fb'}`;
+
+      if (timedOut) {
+        fb.innerHTML = `<strong>⏱ Time's up!</strong>The correct answer was <strong>${LETTERS[q.correct]}. ${escapeHtml(q.options[q.correct])}</strong><br>${escapeHtml(q.explanation)}`;
+      } else if (isCorrect) {
+        fb.innerHTML = `<strong>✅ Correct!</strong>${escapeHtml(q.explanation)}`;
+      } else {
+        fb.innerHTML = `<strong>❌ Incorrect</strong>The correct answer was <strong>${LETTERS[q.correct]}. ${escapeHtml(q.options[q.correct])}</strong><br>${escapeHtml(q.explanation)}`;
+      }
+
+      $('feedbackArea').appendChild(fb);
+
+      const isLast = state.currentIndex >= state.questions.length - 1;
+      $('nextBtn').textContent = isLast ? 'See Results →' : 'Next Question →';
+      $('nextBtnWrap').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+      if (state.currentIndex >= state.questions.length - 1) {
+        showFinalResults();
+        return;
+      }
+
+      $('questionArea').classList.add('slide-out');
+      setTimeout(() => {
+        state.currentIndex++;
+        renderQuestion();
+      }, 250);
+    }
+
+    function showFinalResults() {
+      clearTimer();
+      $('progressBar').style.width = '100%';
+
+      const total = state.questions.length;
+      let correct = 0;
+      state.answers.forEach(a => { if (a && a.correct) correct++; });
+      const wrong = total - correct;
+      const pct = Math.round((correct / total) * 100);
+
+      $('finalScore').textContent = `${pct}%`;
+      $('statCorrect').textContent = correct;
+      $('statWrong').textContent = wrong;
+      $('statTotal').textContent = total;
+
+      const prevHigh = parseInt(localStorage.getItem(HIGH_SCORE_KEY) || '0', 10);
+      const newHighEl = $('newHighScoreMsg');
+      if (pct > prevHigh) {
+        localStorage.setItem(HIGH_SCORE_KEY, String(pct));
+        newHighEl.classList.remove('hidden');
+        loadHighScore();
+      } else {
+        newHighEl.classList.add('hidden');
+      }
+
+      const list = $('reviewList');
+      list.innerHTML = '';
+      state.questions.forEach((q, i) => {
+        const ans = state.answers[i];
+        const wasCorrect = ans && ans.correct;
+        const item = document.createElement('div');
+        item.className = `review-item ${wasCorrect ? 'was-correct' : 'was-wrong'}`;
+
+        let yourAnswer = 'No answer (timed out)';
+        if (ans && ans.selected >= 0) {
+          yourAnswer = `${LETTERS[ans.selected]}. ${q.options[ans.selected]}`;
+        }
+
+        item.innerHTML = `
+          <div class="review-q">Q${i + 1}. ${escapeHtml(q.question)}</div>
+          <div class="review-detail">
+            Your answer: <span>${escapeHtml(yourAnswer)}</span><br>
+            Correct answer: <span>${LETTERS[q.correct]}. ${escapeHtml(q.options[q.correct])}</span><br>
+            ${escapeHtml(q.explanation)}
+          </div>`;
+        list.appendChild(item);
+      });
+
+      showResults();
+    }
+
+    function retakeQuiz() {
+      state.currentIndex = 0;
+      state.answers = new Array(state.questions.length).fill(null);
+      startQuiz();
+    }
+
+    init();
+  </script>
+</body>
+</html>
